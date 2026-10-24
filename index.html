@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Link in Bio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;600&display=swap">
+<style>
+:root{--bg:#fff;--text:#1a1a1a;--muted:#6b6b6b;--line:#e6e6e6;--avatar:#111;--avatar-ink:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#121212;--text:#f2f2f2;--muted:#a0a0a0;--line:#2a2a2a;--avatar:#f2f2f2;--avatar-ink:#111}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Mulish",system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+header{display:flex;align-items:center;justify-content:center;gap:14px;height:86px;border-bottom:1px solid var(--line)}
+.avatar{width:46px;height:46px;border-radius:50%;background:var(--avatar);color:var(--avatar-ink);display:grid;place-items:center;font:700 22px Georgia,serif;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.handle{font-size:19px}
+.hint{text-align:center;color:var(--muted);font-size:19px;margin:34px 16px 38px}
+main{max-width:1380px;margin:0 auto;padding:0 clamp(8px,4.5vw,63px) 60px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(4px,.9vw,12px)}
+.tile{position:relative;display:block;aspect-ratio:3/4;overflow:hidden;background:#222;color:#fff;text-decoration:none}
+.tile img,.tile .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tile .shade{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.65),rgba(0,0,0,0) 55%)}
+.tile .cap{position:absolute;left:6%;right:6%;bottom:6%;font:400 clamp(13px,2.6vw,30px)/1.15 Georgia,"Times New Roman",serif}
+.tile .play{position:absolute;top:6%;right:6%;width:clamp(18px,3.4vw,44px);opacity:.92}
+.tile::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .15s}
+.tile:hover::after,.tile:focus-visible::after{background:rgba(0,0,0,.18)}
+.tile:focus-visible{outline:3px solid #4c8dff;outline-offset:2px}
+.error{text-align:center;color:var(--muted);padding:40px 16px}
+</style>
+</head>
+<body>
+<header>
+  <div class="avatar" id="avatar"></div>
+  <span class="handle" id="handle"></span>
+</header>
+<p class="hint">Click on media to learn more</p>
+<main><div class="grid" id="grid"></div><p class="error" id="error" hidden></p></main>
+
+<script>
+/* Nothing to edit here. Add posts in posts.json. */
+fetch("posts.json?v=" + Date.now())
+  .then(function (r) { if (!r.ok) throw new Error("posts.json not found"); return r.json(); })
+  .then(render)
+  .catch(function (e) {
+    var el = document.getElementById("error");
+    el.hidden = false;
+    el.textContent = "Couldn’t load posts.json (" + e.message + "). Check it for a missing comma or quote.";
+  });
+
+function render(cfg) {
+  var handle = cfg.handle || "";
+  document.getElementById("handle").textContent = handle;
+  document.title = handle + " – Link in Bio";
+
+  var av = document.getElementById("avatar");
+  if (cfg.avatar) { var im = document.createElement("img"); im.src = cfg.avatar; im.alt = ""; av.appendChild(im); }
+  else { av.textContent = (handle || "?").charAt(0).toUpperCase(); }
+
+  var grid = document.getElementById("grid");
+  (cfg.posts || []).forEach(function (p) {
+    var a = document.createElement("a");
+    a.className = "tile";
+    a.href = p.link || "#";
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.setAttribute("aria-label", p.caption || "Open post");
+
+    if (p.image) {
+      var img = document.createElement("img");
+      img.src = p.image; img.alt = ""; img.loading = "lazy";
+      a.appendChild(img);
+    } else {
+      var art = document.createElement("div");
+      art.className = "art";
+      var c = p.colors || ["#2b4a7a", "#0d1a2e"];
+      art.style.background = "linear-gradient(160deg," + c[0] + "," + c[1] + ")";
+      a.appendChild(art);
+      var shade = document.createElement("div"); shade.className = "shade"; a.appendChild(shade);
+      var cap = document.createElement("div"); cap.className = "cap"; cap.textContent = p.caption || ""; a.appendChild(cap);
+    }
+    if (p.video) {
+      a.insertAdjacentHTML("beforeend", '<svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M6 3.5v17l14-8.5z"/></svg>');
+    }
+    grid.appendChild(a);
+  });
+}
+</script>
+</body>
+</html>
